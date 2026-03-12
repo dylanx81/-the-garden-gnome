@@ -6,6 +6,7 @@
 <title>The Garden Gnome — Raleigh, NC</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%9C%3C/text%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&family=Fredoka:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
   --bg: #121212; --bg2: #1e1e1e; --bg3: #252525; --bg4: #2f2f2f;
@@ -513,20 +514,83 @@ let state = {
   contNextId: 6
 };
 
-// Load state
-function loadState() {
+// ========== SUPABASE CONFIG ==========
+// 1. Go to supabase.com → New Project
+// 2. Settings → API → copy Project URL and anon public key
+// 3. Paste them here, then redeploy
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+let sb = null;
+try {
+  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL') {
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+} catch(e) { console.warn('Supabase init failed:', e); }
+
+// Stable device ID — persists in localStorage, survives domain changes when manually migrated
+function getDeviceId() {
+  let id = localStorage.getItem('gg_device_id');
+  if (!id) {
+    id = 'gg_' + crypto.randomUUID();
+    localStorage.setItem('gg_device_id', id);
+  }
+  return id;
+}
+
+// Load state — localStorage first (instant), then Supabase (authoritative)
+async function loadState() {
+  // 1. Load from localStorage immediately so UI isn't blank
   try {
     const s = localStorage.getItem('garden_gnome_v5');
-    if (s) { const parsed = JSON.parse(s); Object.assign(state, parsed); }
-    // Also try importing old v4 cells
-    if (!s) {
+    if (s) { Object.assign(state, JSON.parse(s)); }
+    else {
       const old = localStorage.getItem('garden_cells_v2');
       if (old) { state.cells = JSON.parse(old); }
     }
-  } catch(e) { console.warn('State load error:', e); }
+  } catch(e) { console.warn('localStorage load error:', e); }
+
+  // 2. Pull from Supabase (may override localStorage with newer data)
+  if (!sb) return;
+  try {
+    const { data, error } = await sb
+      .from('garden_state')
+      .select('state_data')
+      .eq('device_id', getDeviceId())
+      .single();
+    if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows, fine
+    if (data?.state_data) {
+      Object.assign(state, data.state_data);
+      // Write back to localStorage as cache
+      localStorage.setItem('garden_gnome_v5', JSON.stringify(state));
+      // Re-render everything with authoritative data
+      renderDashboard();
+      renderBeds();
+      renderContainers();
+      renderIndoor();
+      renderCareLog();
+      updateNotifBadge();
+    }
+  } catch(e) { console.warn('Supabase load error:', e); }
 }
+
+// Debounce timer — avoid hammering Supabase on rapid cell clicks
+let _saveTimer = null;
 function saveState() {
+  // Always save to localStorage immediately (fast, offline-safe)
   try { localStorage.setItem('garden_gnome_v5', JSON.stringify(state)); } catch(e) {}
+  // Debounce Supabase writes to max 1 per 2 seconds
+  if (!sb) return;
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(async () => {
+    try {
+      await sb.from('garden_state').upsert({
+        device_id: getDeviceId(),
+        state_data: state,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'device_id' });
+    } catch(e) { console.warn('Supabase save error:', e); }
+  }, 2000);
 }
 
 // ========== UTILITIES ==========
@@ -2053,19 +2117,21 @@ function updateNotifBadge() {
 }
 
 // ========== INIT ==========
-loadState();
-renderDashboard();
-renderBeds();
-renderContainers();
-renderIndoor();
-renderPlants();
-renderCareLog();
-renderIndoorStart();
-renderRotation();
-renderLawn();
-renderSync();
-renderExport();
-updateNotifBadge();
+(async () => {
+  await loadState(); // loads localStorage instantly, then Supabase authoritative data
+  renderDashboard();
+  renderBeds();
+  renderContainers();
+  renderIndoor();
+  renderPlants();
+  renderCareLog();
+  renderIndoorStart();
+  renderRotation();
+  renderLawn();
+  renderSync();
+  renderExport();
+  updateNotifBadge();
+})();
 </script>
 </body>
 </html>
