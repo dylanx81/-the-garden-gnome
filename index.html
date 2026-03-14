@@ -1813,86 +1813,133 @@ function showLawnMonth(m, btn) {
 
 // ========== SETTINGS: SYNC ==========
 function renderSync() {
+  const existingCode = localStorage.getItem('gg_sync_code');
+  const isLinked = localStorage.getItem('gg_linked_to');
+  const appURL = 'https://the-garden-gnome.vercel.app';
+
   document.getElementById('ssub-sync').innerHTML = `
     <div class="section-title">🔗 Partner Sync</div>
-    <div class="card" style="margin-bottom:1rem">
-      <strong>How it works:</strong>
-      <ol style="font-size:.85rem;color:var(--t2);padding-left:1.2rem;margin-top:.4rem;line-height:1.8">
-        <li>Your app is live at <strong>thegardengnome.netlify.app</strong></li>
-        <li>Tap <strong>Generate Code</strong> — this creates a unique code and uploads your garden data</li>
-        <li>Share the link or QR with your partner</li>
-        <li>They open the link, go to ⚙️ More → Partner Sync, enter the code, and tap Pull</li>
-      </ol>
+    <div class="card" style="margin-bottom:1rem;font-size:.85rem;color:var(--t2);line-height:1.7">
+      You and your partner share one garden. Generate a code, share it once — from then on every change either of you makes syncs automatically.
     </div>
+
+    ${isLinked ? `
+      <div class="smart-alert sa-success" style="margin-bottom:1rem">
+        <span class="sa-icon">✅</span>
+        <div><strong>Linked to partner garden</strong>You are synced to code: <strong style="color:var(--green)">${isLinked}</strong><br>
+        <button class="btn btn-sm" style="margin-top:.5rem;color:var(--rose)" onclick="unlinkSync()">Unlink</button></div>
+      </div>` : ''}
+
     <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem">
-      <button class="btn btn-green" onclick="generateSync()">🔑 Generate My Code</button>
-      <button class="btn" onclick="pushSync()">⬆️ Push My Data</button>
-      <button class="btn" onclick="pullSync()">⬇️ Pull Partner Data</button>
+      <button class="btn btn-green" onclick="generateSync()">🔑 ${existingCode ? 'My Code: ' + existingCode : 'Generate My Code'}</button>
     </div>
     <div id="sync-code-display"></div>
-    <div style="margin-top:1rem">
-      <label style="font-size:.78rem;color:var(--t3)">Enter partner's code:</label>
-      <div style="display:flex;gap:.5rem;margin-top:.3rem">
-        <input id="sync-join-code" placeholder="GG-XXXXXX" style="flex:1">
-        <button class="btn" onclick="pullSync()">Join</button>
+
+    <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border)">
+      <div style="font-size:.85rem;font-weight:600;margin-bottom:.5rem">Join partner's garden</div>
+      <div style="display:flex;gap:.5rem">
+        <input id="sync-join-code" placeholder="Enter partner's code e.g. GG-ABC123" style="flex:1">
+        <button class="btn btn-green" onclick="joinSync()">Join</button>
       </div>
     </div>
   `;
-  // Check URL for join code
-  const params = new URLSearchParams(window.location.search);
-  const joinCode = params.get('join');
-  if (joinCode) {
-    const inp = document.getElementById('sync-join-code');
-    if (inp) { inp.value = joinCode; }
+
+  if (existingCode) {
+    showSyncCode(existingCode);
   }
 }
 
 async function generateSync() {
-  const code = 'GG-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+  const existing = localStorage.getItem('gg_sync_code');
+  const code = existing || 'GG-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+  localStorage.setItem('gg_sync_code', code);
+
+  // Store the sync code in Supabase linked to this device
   try {
-    const res = await fetch('https://api.jsonbin.io/v3/b', {
+    await fetch(`${SUPABASE_URL}/rest/v1/garden_sync`, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'X-Master-Key': '$2a$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'},
-      body: JSON.stringify({code, state, ts: Date.now()})
+      headers: {...SB_HEADERS, 'Prefer': 'resolution=merge-duplicates,return=minimal'},
+      body: JSON.stringify({
+        sync_code: code,
+        device_id: getDeviceId(),
+        updated_at: new Date().toISOString()
+      })
     });
-    if (!res.ok) throw new Error('API error');
-    const data = await res.json();
-    localStorage.setItem('gg_sync_code', code);
-    localStorage.setItem('gg_sync_bin', data.metadata.id);
-    const shareURL = `https://thegardengnome.netlify.app?join=${code}`;
-    const qrURL = `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(shareURL)}&choe=UTF-8`;
-    document.getElementById('sync-code-display').innerHTML = `
-      <div class="card" style="text-align:center">
-        <div style="font-family:Fredoka;font-size:2rem;color:var(--green);margin:.5rem 0">${code}</div>
-        <img src="${qrURL}" alt="QR Code" style="margin:.5rem auto;display:block;border-radius:8px">
-        <div style="font-size:.78rem;color:var(--t3);margin-top:.5rem">Partner scans this or visits:</div>
-        <div style="font-size:.78rem;color:var(--sky);word-break:break-all">${shareURL}</div>
-        <button class="btn btn-sm" style="margin-top:.5rem" onclick="navigator.clipboard.writeText('${shareURL}')">📋 Copy Link</button>
-      </div>`;
+    showSyncCode(code);
   } catch(e) {
-    document.getElementById('sync-code-display').innerHTML = `<div class="card" style="color:var(--rose)">⚠️ Could not connect to sync service. Your data is still saved locally.</div>`;
+    document.getElementById('sync-code-display').innerHTML = `<div class="card" style="color:var(--rose)">⚠️ Could not save sync code. Check connection.</div>`;
   }
 }
 
-async function pushSync() {
-  const binId = localStorage.getItem('gg_sync_bin');
-  const code = localStorage.getItem('gg_sync_code');
-  if (!binId) { alert('Generate a code first.'); return; }
-  try {
-    await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
-      method: 'PUT',
-      headers: {'Content-Type': 'application/json', 'X-Master-Key': '$2a$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'},
-      body: JSON.stringify({code, state, ts: Date.now()})
-    });
-    alert('Data pushed!');
-  } catch(e) { alert('Push failed. Check internet.'); }
+function showSyncCode(code) {
+  const appURL = 'https://the-garden-gnome.vercel.app';
+  const shareURL = `${appURL}?join=${code}`;
+  const qrURL = `https://chart.googleapis.com/chart?chs=180x180&cht=qr&chl=${encodeURIComponent(shareURL)}&choe=UTF-8`;
+  document.getElementById('sync-code-display').innerHTML = `
+    <div class="card" style="text-align:center">
+      <div style="font-family:Fredoka;font-size:2.5rem;color:var(--green);letter-spacing:.1em;margin:.5rem 0">${code}</div>
+      <img src="${qrURL}" alt="QR" style="margin:.5rem auto;display:block;border-radius:8px;width:150px">
+      <div style="font-size:.75rem;color:var(--t3);margin:.5rem 0">Partner visits or scans:</div>
+      <div style="font-size:.72rem;color:var(--sky);word-break:break-all;margin-bottom:.5rem">${shareURL}</div>
+      <button class="btn btn-sm btn-green" onclick="navigator.clipboard.writeText('${shareURL}').then(()=>alert('Link copied!'))">📋 Copy Link</button>
+    </div>`;
 }
 
-async function pullSync() {
-  const code = document.getElementById('sync-join-code')?.value?.trim();
-  if (!code) { alert('Enter a code first.'); return; }
-  alert('Pull feature requires the sync bin ID from the code generator. Ask your partner to share the link directly.');
+async function joinSync() {
+  const code = document.getElementById('sync-join-code').value.trim().toUpperCase();
+  if (!code) { alert('Enter a sync code first.'); return; }
+
+  document.getElementById('sync-code-display').innerHTML = `<div class="card" style="color:var(--t3)">🔄 Looking up partner garden...</div>`;
+
+  try {
+    // Look up the device_id linked to this sync code
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/garden_sync?sync_code=eq.${code}&select=device_id`, {
+      headers: SB_HEADERS
+    });
+    const rows = await res.json();
+    if (!rows || rows.length === 0) {
+      document.getElementById('sync-code-display').innerHTML = `<div class="card" style="color:var(--rose)">⚠️ Code not found. Check the code and try again.</div>`;
+      return;
+    }
+
+    const partnerDeviceId = rows[0].device_id;
+
+    // Pull partner's garden state
+    const partnerState = await sbGet(partnerDeviceId);
+    if (!partnerState) {
+      document.getElementById('sync-code-display').innerHTML = `<div class="card" style="color:var(--rose)">⚠️ Found the code but no garden data yet. Ask your partner to open the app first.</div>`;
+      return;
+    }
+
+    // Adopt partner's device ID so we write to the same row
+    localStorage.setItem('gg_device_id', partnerDeviceId);
+    localStorage.setItem('gg_linked_to', code);
+    Object.assign(state, partnerState);
+    localStorage.setItem('garden_gnome_v5', JSON.stringify(state));
+
+    renderDashboard();
+    renderBeds();
+    renderContainers();
+    renderIndoor();
+    renderCareLog();
+    updateNotifBadge();
+    renderSync();
+
+    document.getElementById('sync-code-display').innerHTML = `<div class="smart-alert sa-success"><span class="sa-icon">🎉</span><div><strong>Synced!</strong> You are now sharing one garden. Any changes either of you make will sync automatically.</div></div>`;
+  } catch(e) {
+    document.getElementById('sync-code-display').innerHTML = `<div class="card" style="color:var(--rose)">⚠️ Sync failed. Check your connection and try again.</div>`;
+  }
 }
+
+function unlinkSync() {
+  if (!confirm('Unlink from partner garden? Your local data stays but you will stop syncing.')) return;
+  localStorage.removeItem('gg_linked_to');
+  localStorage.removeItem('gg_device_id'); // gets a fresh UUID on next load
+  renderSync();
+}
+
+async function pushSync() {}
+async function pullSync() {}
 
 // ========== SETTINGS: EXPORT ==========
 function renderExport() {
