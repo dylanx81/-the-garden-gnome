@@ -1874,7 +1874,7 @@ async function generateSync() {
 function showSyncCode(code) {
   const appURL = 'https://the-garden-gnome.vercel.app';
   const shareURL = `${appURL}?join=${code}`;
-  const qrURL = `https://chart.googleapis.com/chart?chs=180x180&cht=qr&chl=${encodeURIComponent(shareURL)}&choe=UTF-8`;
+  const qrURL = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(shareURL)}`;
   document.getElementById('sync-code-display').innerHTML = `
     <div class="card" style="text-align:center">
       <div style="font-family:Fredoka;font-size:2.5rem;color:var(--green);letter-spacing:.1em;margin:.5rem 0">${code}</div>
