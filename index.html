@@ -545,7 +545,12 @@ try {
 function getDeviceId() {
   let id = localStorage.getItem('gg_device_id');
   if (!id) {
-    id = 'gg_' + crypto.randomUUID();
+    id = crypto.randomUUID();
+    localStorage.setItem('gg_device_id', id);
+  }
+  // Strip legacy gg_ prefix if present
+  if (id.startsWith('gg_')) {
+    id = id.substring(3);
     localStorage.setItem('gg_device_id', id);
   }
   return id;
