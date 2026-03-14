@@ -217,12 +217,100 @@ textarea{resize:vertical;min-height:60px}
 .smart-alert.sa-success{background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.15);color:var(--green)}
 .smart-alert strong{display:block;margin-bottom:2px}
 
-/* RESPONSIVE */
+/* RESPONSIVE — MOBILE FIRST */
 @media(max-width:640px){
-  .topbar{flex-wrap:wrap}
-  .dash-hero h2{font-size:1.2rem}
+  /* Hide scrolling top nav on mobile */
+  .nav-scroll{display:none}
+  .notif-bell{margin-left:auto}
+
+  /* Add bottom padding so content clears the bottom tab bar */
+  .view{padding:.75rem .75rem 80px}
+
+  /* Tighter hero */
+  .dash-hero{padding:1rem}
+  .dash-hero h2{font-size:1.1rem}
+  .dash-hero .sub{font-size:.78rem}
+
+  /* Stats: 2 columns */
+  .dash-stats{grid-template-columns:1fr 1fr}
+  .stat-card .num{font-size:1.4rem}
+
+  /* Plant now: 1 column */
+  .plant-now-grid{grid-template-columns:1fr 1fr}
+
+  /* All grids: 1 column */
   .grid-2,.grid-3,.grid-4{grid-template-columns:1fr}
-  .wx-current{flex-direction:column;align-items:flex-start}
+
+  /* Bigger bed cells for fat fingers */
+  .bed-cell{min-height:52px;font-size:1.2rem}
+  .bed-cell .cell-label{font-size:.55rem}
+
+  /* Full screen modals on mobile */
+  .modal-overlay{padding:0;align-items:flex-end}
+  .modal{max-width:100%;width:100%;max-height:90vh;border-radius:var(--r) var(--r) 0 0;padding:1.25rem}
+
+  /* Picker list taller on mobile */
+  .picker-list{max-height:50vh}
+  .picker-item{padding:.75rem .5rem}
+  .picker-item .p-name{font-size:.9rem}
+
+  /* Care buttons bigger */
+  .care-btn{padding:.6rem 1rem;font-size:.85rem}
+
+  /* Weather */
+  .wx-current{flex-direction:column;align-items:flex-start;padding:1rem}
+  .wx-temp{font-size:2.5rem}
+  .wx-forecast{grid-template-columns:repeat(4,1fr)}
+
+  /* AI chat full height */
+  .ai-chat{height:calc(100vh - 200px)}
+  .ai-input-row input{font-size:16px} /* prevent iOS zoom */
+
+  /* Sub tabs scrollable */
+  .sub-tabs{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+  .sub-tabs::-webkit-scrollbar{display:none}
+
+  /* Bed tabs scrollable */
+  .bed-tabs{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;padding-bottom:.25rem}
+  .bed-tabs::-webkit-scrollbar{display:none}
+
+  /* Bigger buttons */
+  .btn{padding:.6rem 1rem;font-size:.85rem}
+  .btn-sm{padding:.5rem .8rem;font-size:.78rem}
+
+  /* Section titles smaller */
+  .section-title{font-size:1.1rem}
+
+  /* Doctor upload bigger tap area */
+  .doctor-upload{padding:2.5rem 1rem}
+}
+
+/* BOTTOM TAB BAR — mobile only */
+.bottom-nav{display:none}
+@media(max-width:640px){
+  .bottom-nav{
+    display:flex;
+    position:fixed;
+    bottom:0;left:0;right:0;
+    z-index:200;
+    background:rgba(18,18,18,.97);
+    backdrop-filter:blur(12px);
+    border-top:1px solid var(--border);
+    padding:.5rem .25rem;
+    padding-bottom:max(.5rem, env(safe-area-inset-bottom));
+    justify-content:space-around;
+    align-items:center;
+  }
+  .bnav-btn{
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+    background:none;border:none;color:var(--t3);
+    font-family:'Fredoka';font-size:.6rem;font-weight:500;
+    cursor:pointer;padding:.3rem .5rem;border-radius:var(--rs);
+    transition:all .2s;min-width:52px;
+  }
+  .bnav-btn .bnav-icon{font-size:1.3rem;line-height:1}
+  .bnav-btn.active{color:var(--green)}
+  .bnav-btn.active .bnav-icon{transform:scale(1.15)}
 }
 </style>
 </head>
@@ -246,6 +334,17 @@ textarea{resize:vertical;min-height:60px}
     <button class="nav-btn" onclick="switchTab('settings')">⚙️ More</button>
   </div>
   <button class="notif-bell" onclick="showNotifs()" title="Alerts">🔔<span class="notif-badge" id="notif-badge">0</span></button>
+</div>
+
+<!-- BOTTOM NAV (mobile only) -->
+<div class="bottom-nav">
+  <button class="bnav-btn active" onclick="switchTab('dashboard');setActiveBottomNav(this)"><span class="bnav-icon">🏠</span>Home</button>
+  <button class="bnav-btn" onclick="switchTab('garden');setActiveBottomNav(this)"><span class="bnav-icon">🪴</span>Garden</button>
+  <button class="bnav-btn" onclick="switchTab('plants');setActiveBottomNav(this)"><span class="bnav-icon">🌿</span>Plants</button>
+  <button class="bnav-btn" onclick="switchTab('ai');setActiveBottomNav(this)"><span class="bnav-icon">🧠</span>AI</button>
+  <button class="bnav-btn" onclick="switchTab('weather');setActiveBottomNav(this)"><span class="bnav-icon">🌤</span>Weather</button>
+  <button class="bnav-btn" onclick="switchTab('carelog');setActiveBottomNav(this)"><span class="bnav-icon">💧</span>Care</button>
+  <button class="bnav-btn" onclick="switchTab('settings');setActiveBottomNav(this)"><span class="bnav-icon">⚙️</span>More</button>
 </div>
 
 <!-- DASHBOARD -->
@@ -614,6 +713,11 @@ function saveState() {
 function isInWindow(plant) { return plant.window.includes(CUR_MONTH); }
 function getPlant(id) { return PLANTS.find(p => p.id === id); }
 function daysBetween(d1, d2) { return Math.round((d2 - d1) / 86400000); }
+
+function setActiveBottomNav(btn) {
+  document.querySelectorAll('.bnav-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
 
 function switchTab(tab) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
