@@ -677,6 +677,7 @@ function getDeviceId() {
 
 // Load state — localStorage first (instant), then Supabase (authoritative)
 async function loadState() {
+  // 1. Load from localStorage immediately so UI isn't blank
   try {
     const s = localStorage.getItem('garden_gnome_v5');
     if (s) { Object.assign(state, JSON.parse(s)); }
@@ -686,19 +687,28 @@ async function loadState() {
     }
   } catch(e) { console.warn('localStorage load error:', e); }
 
+  // 2. Pull from Supabase — always wins over localStorage
   try {
     const remoteState = await sbGet(getDeviceId());
-    if (remoteState) {
-      Object.assign(state, remoteState);
+    if (remoteState && remoteState.cells && Object.keys(remoteState.cells).length > 0) {
+      // Deep merge — Supabase is authoritative
+      state.cells = remoteState.cells;
+      state.containers = remoteState.containers || state.containers;
+      state.careLog = remoteState.careLog || state.careLog;
+      state.contNextId = remoteState.contNextId || state.contNextId;
+      state.indoorStations = remoteState.indoorStations || state.indoorStations;
+      // Update localStorage cache
       localStorage.setItem('garden_gnome_v5', JSON.stringify(state));
-      renderDashboard();
-      renderBeds();
-      renderContainers();
-      renderIndoor();
-      renderCareLog();
-      updateNotifBadge();
     }
   } catch(e) { console.warn('Supabase load error:', e); }
+
+  // 3. Re-render with final state
+  renderDashboard();
+  renderBeds();
+  renderContainers();
+  renderIndoor();
+  renderCareLog();
+  updateNotifBadge();
 }
 
 // Debounced save
@@ -2287,18 +2297,12 @@ function updateNotifBadge() {
 // ========== INIT ==========
 (async () => {
   await loadState(); // loads localStorage instantly, then Supabase authoritative data
-  renderDashboard();
-  renderBeds();
-  renderContainers();
-  renderIndoor();
   renderPlants();
-  renderCareLog();
   renderIndoorStart();
   renderRotation();
   renderLawn();
   renderSync();
   renderExport();
-  updateNotifBadge();
 })();
 </script>
 </body>
