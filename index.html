@@ -465,7 +465,20 @@ const PLANTS = [
   {id:'067',name:'Sparkler',family:'Radish',emoji:'🔴',window:[2,3,4,9,10],depth:'1/2"',spacing:'2"',days:25,indoor:0,notes:'Red with white tip, mild flavor. 25-day crop — great for impatient gardeners. Same culture as all radishes: cool weather, keep moist, harvest promptly'},
   {id:'068',name:'Bouquet Mammoth',family:'Dill',emoji:'🌿',window:[3,4,5],depth:'1/4"',spacing:'12"',days:65,indoor:0,notes:'Direct sow ONLY — deep taproot hates transplanting. Self-seeds. Companion for cucumbers, deters aphids. Harvest fronds young. Let some flower for beneficial insects and coriander-like seeds'},
   {id:'076',name:'Green Globe',family:'Artichoke',emoji:'🌿',window:[2,3],depth:'1/4"',spacing:'36"',days:85,indoor:8,notes:'Perennial. Needs cold vernalization before transplant. Start indoors Dec–Jan. Large 4ft plants. Harvest buds before opening. Can overwinter in zone 8a with heavy mulch'},
-  {id:'077',name:'Everberry',family:'Strawberry',emoji:'🍓',window:[3,4],depth:'crown at soil level',spacing:'15"',days:90,indoor:0,notes:'Everbearing — produces spring, summer & fall. Full sun 6–8hr. pH 6–6.5. Water roots only, not leaves. 10-10-10 fertilizer at planting. Remove first 6 weeks of flowers for stronger plants. Protect fruit from birds. Runners will spread — train or trim. Mulch with straw to keep fruit clean'}
+  {id:'077',name:'Everberry',family:'Strawberry',emoji:'🍓',window:[3,4],depth:'crown at soil level',spacing:'15"',days:90,indoor:0,notes:'Everbearing — produces spring, summer & fall. Full sun 6–8hr. pH 6–6.5. Water roots only, not leaves. 10-10-10 fertilizer at planting. Remove first 6 weeks of flowers for stronger plants. Protect fruit from birds. Runners will spread — train or trim. Mulch with straw to keep fruit clean'},
+
+  // ===== NEW SEEDS (March 2026) =====
+  {id:'080',name:'Hearts of Gold',family:'Cantaloupe',emoji:'🍈',window:[5,6],depth:'1/2"',spacing:'36"',days:70,indoor:3,notes:'Heirloom. Sweet golden flesh, heavily netted rind. One of the best-flavored cantaloupes. Start indoors 3wk early or direct sow when soil ≥70°F. Plant on mounds for drainage. Ripe when stem slips easily with gentle pressure.'},
+  {id:'081',name:'Minnesota Midget',family:'Cantaloupe',emoji:'🍈',window:[5,6],depth:'1/2"',spacing:'24"',days:65,indoor:3,notes:'Organic. Compact 4" fruits on short 3ft vines — ideal for small beds and containers. Earliest cantaloupe. Very sweet. Perfect for Raleigh. Harvest when fragrant and stem cracks.'},
+  {id:'082',name:'Inspire F1',family:'Cantaloupe',emoji:'🍈',window:[5,6],depth:'1/2"',spacing:'36"',days:65,indoor:3,notes:'Hybrid. Early producing, high sugar content. Thick netting, firm orange flesh. Good disease resistance. Direct sow or start 3wk indoors. Full sun, consistent water until fruit sets then reduce.'},
+  {id:'083',name:'Honey Rock',family:'Cantaloupe',emoji:'🍈',window:[5,6],depth:'1/2"',spacing:'36"',days:85,indoor:3,notes:'Organic heirloom. 1934 AAS winner. Heavily netted 3lb fruits, salmon-orange flesh. Rich classic flavor. Needs full Raleigh summer heat. Plant on mounds. Reduce water as fruit ripens for sweeter flesh.'},
+  {id:'084',name:'Iroquois',family:'Cantaloupe',emoji:'🍈',window:[5,6],depth:'1/2"',spacing:'36"',days:75,indoor:3,notes:'Heirloom. Large 5–7lb fruit, thick orange flesh, excellent flavor. One of the best heirlooms for the Southeast. Vigorous vines, good disease tolerance. Direct sow when soil ≥70°F.'},
+  {id:'085',name:'Sierra Gold',family:'Cantaloupe',emoji:'🍈',window:[5,6],depth:'1/2"',spacing:'36"',days:85,indoor:3,notes:'Organic. Golden yellow flesh, intensely sweet. Smooth skin turns golden when ripe — easy harvest indicator. Good heat tolerance. Full sun, well-drained soil, consistent moisture until fruit sets.'},
+  {id:'086',name:'Celebration Hybrid',family:'Tomato',emoji:'🍅',window:[4,5],depth:'1/4"',spacing:'24"',days:70,indoor:6,notes:'Determinate. Deep red globe tomatoes, crack resistant. VFF disease resistance package. Good for Raleigh humidity. Container variety (24"+ pot). Start indoors 6–8wk before last frost. Bury stem deep when transplanting.'},
+  {id:'087',name:'Rainbow Blend Organic',family:'Tomato',emoji:'🍅',window:[4,5],depth:'1/4"',spacing:'24"',days:70,indoor:6,notes:'Organic mix of red, yellow, orange, purple tomatoes. Container variety (24"+ pot). Indeterminate. Start indoors 6–8wk before last frost. Stake or cage. Lower acidity mix — great for fresh eating and salads.'},
+  {id:'088',name:'Tastemaster Hybrid',family:'Tomato',emoji:'🍅',window:[4,5],depth:'1/4"',spacing:'24"',days:70,indoor:6,notes:'Large beefsteak-type hybrid. Container variety (24"+ pot). Meaty, low-acid, excellent fresh flavor. Indeterminate. Start indoors 6–8wk before last frost. Heavy fruit — stake well. Prune suckers for larger fruit.'},
+  {id:'089',name:'Black Cherry Sow Easy',family:'Tomato',emoji:'🍅',window:[4,5],depth:'1/4"',spacing:'24"',days:65,indoor:6,sowEasy:true,notes:'Sow Easy pre-spaced seeds. Deep mahogany-black cherry tomato, intensely sweet and complex flavor. Indeterminate, prolific. Start indoors 6–8wk before last frost. Strong cage needed — very vigorous plant.'},
+  {id:'090',name:'Tarragon',family:'Herb',emoji:'🌿',window:[4,5],depth:'1/8"',spacing:'18"',days:75,indoor:6,notes:'Perennial herb in zone 8a. Container variety (12"+ pot). Anise-like flavor essential in French cooking. Start indoors or buy transplants — seeds germinate slowly. Well-drained soil, full sun. Drought tolerant once established. Cut back hard in fall.'}
 ];
 
 const MONTH_NAMES = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -489,7 +502,7 @@ const FAM_COLORS = {
   Asclepias:'var(--orange)',Malva:'var(--violet)',Poppy:'var(--violet)',
   Other:'var(--teal)',Radish:'var(--rose)',
   'English Daisy':'var(--rose)',Aubrieta:'var(--violet)',Amaranthus:'var(--rose)',
-  Marigold:'var(--amber)',Artichoke:'var(--green)',Strawberry:'var(--rose)'
+  Marigold:'var(--amber)',Artichoke:'var(--green)',Strawberry:'var(--rose)',Herb:'var(--green)'
 };
 
 // Beds config
@@ -519,7 +532,7 @@ let state = {
 // 2. Settings → API → copy Project URL and anon public key
 // 3. Paste them here, then redeploy
 const SUPABASE_URL = 'https://hipgakwywmrvulcxysnv.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_-H5YMXZ6b1xpH_qIqvLz7w_qklhUoJj';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhpcGdha3d5d21ydnVsY3h5c252Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyODU4MTksImV4cCI6MjA4ODg2MTgxOX0.sBkGVQwE6U7jbPiekYki2C-jDF10NgOn2t2heryW5UU';
 
 let sb = null;
 try {
@@ -1406,7 +1419,7 @@ const SUPER_GROUPS = [
   {name:'🥒 Vine Crops', families:['Cucumber','Squash']},
   {name:'🌽 Corn', families:['Corn']},
   {name:'🍉 Melons & Fruits', families:['Watermelon','Cantaloupe','Honeydew','Melon']},
-  {name:'🌿 Herbs', families:['Basil','Cilantro','Sage','Dill','Celery']},
+  {name:'🌿 Herbs', families:['Basil','Cilantro','Sage','Dill','Celery','Herb','Tarragon']},
   {name:'🌸 Flowers & Ornamentals', families:['Cosmos','Nasturtium','Borage','Asclepias','Malva','Poppy','English Daisy','Aubrieta','Amaranthus','Marigold']}
 ];
 
