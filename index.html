@@ -2063,7 +2063,75 @@ function renderExport() {
       <p style="font-size:.85rem;color:var(--t2);margin-bottom:1rem">Generate a printable overview of your garden.</p>
       <button class="btn btn-green" onclick="exportPDF()">🖨 Print Garden Plan</button>
     </div>
+    <div class="section-title" style="margin-top:1.5rem">💾 Backup & Restore</div>
+    <div class="card">
+      <p style="font-size:.85rem;color:var(--t2);margin-bottom:.5rem">Download a complete backup of all your garden data — beds, containers, plantings, care logs, and seeds. This file stays on your device and never goes to any server.</p>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem">
+        <button class="btn btn-green" onclick="downloadBackup()">⬇️ Download Backup</button>
+        <button class="btn" onclick="document.getElementById('restore-file').click()">⬆️ Restore from Backup</button>
+      </div>
+      <input type="file" id="restore-file" accept=".json" style="display:none" onchange="restoreBackup(event)">
+      <div id="backup-status" style="margin-top:.5rem;font-size:.78rem"></div>
+    </div>
   `;
+}
+
+function downloadBackup() {
+  var backup = {
+    version: 'garden_gnome_v5',
+    exportedAt: new Date().toISOString(),
+    state: state,
+    plantCount: PLANTS.length,
+    meta: {
+      beds: BEDS.map(function(b) { return b.name; }),
+      totalPlanted: Object.values(state.cells).reduce(function(n, bed) { return n + Object.keys(bed).length; }, 0),
+      totalCareEntries: state.careLog ? state.careLog.length : 0,
+      containers: state.containers ? state.containers.length : 0
+    }
+  };
+  var blob = new Blob([JSON.stringify(backup, null, 2)], {type: 'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'garden-gnome-backup-' + new Date().toISOString().split('T')[0] + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  var el = document.getElementById('backup-status');
+  if (el) el.innerHTML = '<span style="color:var(--green)">Backup downloaded! Keep this file safe.</span>';
+}
+
+function restoreBackup(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var backup = JSON.parse(e.target.result);
+      if (!backup.state || !backup.version) throw new Error('Invalid backup file');
+      var planted = backup.meta ? backup.meta.totalPlanted : 'unknown';
+      var care = backup.meta ? backup.meta.totalCareEntries : 0;
+      var ok = confirm(
+        'Restore this backup?\n\n' +
+        'Exported: ' + new Date(backup.exportedAt).toLocaleDateString() + '\n' +
+        'Plants in ground: ' + planted + '\n' +
+        'Care log entries: ' + care + '\n\n' +
+        'This will REPLACE your current garden data.'
+      );
+      if (!ok) return;
+      Object.assign(state, backup.state);
+      saveState();
+      renderDashboard(); renderBeds(); renderContainers(); renderIndoor();
+      renderPlants(); renderCareLog(); updateNotifBadge();
+      var el = document.getElementById('backup-status');
+      if (el) el.innerHTML = '<span style="color:var(--green)">Backup restored successfully!</span>';
+    } catch(err) {
+      var el = document.getElementById('backup-status');
+      if (el) el.innerHTML = '<span style="color:var(--rose)">Could not restore: ' + err.message + '. Make sure this is a Garden Gnome backup file.</span>';
+    }
+  };
+  reader.readAsText(file);
 }
 
 function exportPDF() {
